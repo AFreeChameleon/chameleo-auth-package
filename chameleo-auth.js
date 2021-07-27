@@ -25,6 +25,7 @@ function convertRespToJSON(string, status) {
 
 function inactivityTime(ws) {
     var time;
+    var away = false;
     window.onload = resetTimer;
     document.onmousemove = resetTimer;
     document.onmousedown = resetTimer;
@@ -34,12 +35,16 @@ function inactivityTime(ws) {
     document.addEventListener('scroll', resetTimer, true);
     
     function setAway() {
-        alert('YOURE AWAY HUH?!')
+        ws.send("away");
+        away = true;
     }
 
     function resetTimer() {
+        if (away) {
+            ws.send("online");
+        }
         clearTimeout(time);
-        time = setTimeout(setAway, 60000)
+        time = setTimeout(setAway, 7200000);
         // 1000 milliseconds = 1 second
     }
 }
@@ -66,6 +71,7 @@ function setUpWebsockets(root, url) {
     root.ws = new WebSocket(url);
     root.ws.onopen = function(e) {
         console.log('Connected to: ', url)
+        inactivityTime(root.ws);
     }
 }
 
@@ -89,7 +95,6 @@ function ChameleoAuth(container_name, server) {
                 function(loggedIn, auth_token) {
                     if (loggedIn && auth_token) {
                         root.auth_token = auth_token;
-                        inactivityTime();
                         setUpWebsockets(root, 'ws://localhost:3002/?auth_token=' + root.auth_token);
                     }
             });
